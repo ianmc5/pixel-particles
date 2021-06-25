@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta name="viewport" content="width=device-width, initial-scale=.5"/>
+ <style>
+body {
+   margin: 20;
+   padding: 20;
+   text-align: center;
+  }
+#canvas1 
+  {
+   width: 700;
+   height: 700;
+   border: 2px solid #000000;
+  }
+ </style>
+</head>
+<body>
+ <canvas id='canvas1'></canvas>
+ <p id="num"></p>
+ <p id="fps"></p>
+ <script>
+const c = document.getElementById("canvas1");
+const ctx = c.getContext('2d', {alpha: false});
+const width = ctx.canvas.width = 700;
+const height = ctx.canvas.height = 700;
+var particleArray = [];
+var amount = 0;
+var canvasData = ctx.getImageData(0, 0, width, height);
+var fps = 60, time = new Date().getTime();
+
+function drawPixel (x, y, r, g, b, a) 
+{   
+    var px = Math.round(x);
+    var py = Math.round(y);
+
+    var index = (px + py * width) * 4;
+ 
+    canvasData.data[index + 0] = r;
+    canvasData.data[index + 1] = g;
+    canvasData.data[index + 2] = b;
+    canvasData.data[index + 3] = a;
+}
+
+function updateCanvas() 
+{
+ ctx.putImageData(canvasData, 0, 0);
+}
+
+// particle prototype
+function particle(x, y, v, angle)
+{
+ this.x = x;
+ this.y = y;
+ this.v = v;
+ this.angle = angle;
+ this.vx = (this.v * Math.cos(this.angle));
+ this.vy = (this.v * Math.sin(this.angle));
+}
+
+particle.prototype.draw = function()
+{
+ drawPixel(this.x, this.y, 150, 0, 200, 255);
+}
+
+function erase()
+{
+ ctx.beginPath();
+ ctx.rect(0,0, width, height);
+ ctx.fillStyle = "white";
+ ctx.fill();
+ canvasData = ctx.getImageData(0, 0, width, height);
+ ctx.putImageData(canvasData, 0, 0);
+}
+
+particle.prototype.update = function()
+{
+ // wall collision
+ if (this.x > width || this.x < 0)
+ {
+  this.vx = -this.vx;
+ }
+ if (this.y > height || this.y < 0)
+ {
+  this.vy = -this.vy;
+ }
+ // movement
+ this.x += this.vx;
+ this.y += this.vy;
+}
+
+function spawnParticles()
+{
+ for(let i = 150000; i--; )
+ {
+  let r = (Math.random() * 100) - 50;
+  let angle = Math.random() * 360;
+  let x = r * Math.cos(angle) + (width / 2);
+  let y = r * Math.sin(angle) + (height / 2);
+  let v =1;
+  particleArray.push(new particle(x, y, v, angle));
+  amount++;
+  document.getElementById("num").innerHTML = ("# of particles: " + amount);
+ }
+}
+
+function animate()
+{
+ erase();
+ for(let i = particleArray.length; i--; )
+ {
+  particleArray[i].update();
+ }
+ for(let i = particleArray.length; i--; )
+ { 
+  particleArray[i].draw(); 
+ }
+ updateCanvas();
+ requestAnimationFrame(animate);
+
+ var ntime = new Date().getTime();
+ fps = 0.97*fps + 0.03*1000/(ntime-time); 
+ time = ntime;
+ document.getElementById("fps").innerHTML = ("fps: " + fps.toFixed(0));
+}
+
+spawnParticles();
+animate();
+//////////////////////////////////////////////////
+ </script>
+</body>
+</html>
